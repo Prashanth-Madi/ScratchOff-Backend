@@ -16,17 +16,23 @@ const express_1 = __importDefault(require("express"));
 const database_1 = __importDefault(require("./database"));
 const cors_1 = __importDefault(require("cors"));
 const Authentication_1 = __importDefault(require("./databaseConnections/Authentication"));
+const uuid_1 = require("uuid");
+const dotenv_1 = __importDefault(require("dotenv"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const passport_1 = require("passport");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
-//const port=4000;
 app.use((0, cors_1.default)());
-// app.use((req, res, next) => {
-//     res.header('Access-Control-Allow-Origin', '*'); // Allow all origins
-//     res.header('Access-Control-Allow-cartContextods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allow specific cartContextods
-//     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allow specific headers
-//     next();
-//   });
-app.listen(4000, () => { console.log(`server running on port 4000`); });
+dotenv_1.default.config();
+app.use((0, cookie_parser_1.default)("hello world"));
+app.use((0, passport_1.session)({
+    saveUnitialized: false,
+    resave: false,
+    cookie: {
+        maxAge: 60000 * 2
+    }
+}));
+app.listen(process.env.PORT, () => { console.log(`server running on port 4000`); });
 app.get('/scratchOff', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const result = yield database_1.default.query('SELECT * FROM public."Books Info"');
@@ -40,7 +46,7 @@ app.get('/scratchOff', (req, res) => __awaiter(void 0, void 0, void 0, function*
 app.patch('/scratchOffs/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // console.log(typeof(req.params.id),typeof(req.body.Currently_at));
     const id = req.params.id;
-    console.log(typeof (req.params.id));
+    //  console.log(typeof(req.params.id))
     try {
         console.log(`Trying to update item with ID: ${id}`);
         const result = yield database_1.default.query('UPDATE "Books Info" SET "Currently_at" = "Currently_at" + 1 WHERE "No" = $1 RETURNING *', [id]);
@@ -57,9 +63,21 @@ app.patch('/scratchOffs/:id', (req, res) => __awaiter(void 0, void 0, void 0, fu
 }));
 app.get('/auth', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const credentials = yield Authentication_1.default.query('SELECT * FROM public."Credential"');
+        const credentials = yield Authentication_1.default.query('SELECT * FROM public."Credentials"');
         res.json(credentials.rows);
         console.log(credentials);
+    }
+    catch (error) {
+        console.log(error);
+    }
+}));
+app.post('/signin');
+app.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(req.body.userName);
+    console.log(req.body.passWord);
+    const Buyer_id = (0, uuid_1.v4)();
+    try {
+        const Credential = yield Authentication_1.default.query('INSERT INTO public."Credentials" ("Username","Password","Buyer Id") VALUES ($1,$2,$3)', [req.body.userName, req.body.passWord, Buyer_id]);
     }
     catch (error) {
         console.log(error);

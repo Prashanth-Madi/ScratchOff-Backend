@@ -3,19 +3,35 @@ import pool from "./database";
 import cors from "cors";
 import exp from "constants";
 import AuthDatabase from "./databaseConnections/Authentication";
+import { v4 as uuidv4 } from 'uuid';
+import dotenv from 'dotenv'
+import cookieParser from 'cookie-parser'
+import session from 'express-session'
+import passport from "passport";
+
 
 
 const app=express();
 app.use(express.json());
-//const port=4000;
 app.use(cors());
-// app.use((req, res, next) => {
-//     res.header('Access-Control-Allow-Origin', '*'); // Allow all origins
-//     res.header('Access-Control-Allow-cartContextods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allow specific cartContextods
-//     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allow specific headers
-//     next();
-//   });
-app.listen(4000,()=>{console.log(`server running on port 4000`)})
+dotenv.config();
+app.use(cookieParser("hello world"));
+app.use(
+  session({
+    secret:"Prashanth Madisehtti",
+    saveUninitialized:false,
+    resave:false,
+    cookie:{
+      maxAge:60000*2
+    }
+  })
+)
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+
+app.listen(process.env.PORT,()=>{console.log(`server running on port 4000`)})
 app.get('/scratchOff',async (req:Request,res:Response)=>{
     try{
         const result= await pool.query('SELECT * FROM public."Books Info"')
@@ -30,7 +46,7 @@ app.get('/scratchOff',async (req:Request,res:Response)=>{
 app.patch('/scratchOffs/:id',async(req:Request,res:Response)=>{
    // console.log(typeof(req.params.id),typeof(req.body.Currently_at));
    const id=req.params.id;
-   console.log(typeof(req.params.id))
+  //  console.log(typeof(req.params.id))
    try {
     console.log(`Trying to update item with ID: ${id}`);
     const result = await pool.query(
@@ -61,5 +77,22 @@ app.get('/auth',async (req:Request,res:Response)=>{
     console.log(error)
   }
 
+
+})
+app.post('/signin',)
+
+
+app.post('/signup',async(req:Request,res:Response)=>{
+  console.log(req.body.userName);
+  console.log(req.body.passWord);
+  const Buyer_id=uuidv4();
+  try{
+    const Credential=await AuthDatabase.query('INSERT INTO public."Credentials" ("Username","Password","Buyer Id") VALUES ($1,$2,$3)',[req.body.userName,req.body.passWord,Buyer_id])
+
+
+  }
+  catch(error){
+    console.log(error)
+  }
 
 })
